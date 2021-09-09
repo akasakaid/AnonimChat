@@ -104,7 +104,7 @@ def main(update):
 		username = ""
 	print(f"{userid} {first_name} - {pesan}")
 	if pesan.startswith("/start"):
-		kirim_pesan(userid,"<i>Welcome to bot anonim chat bot\n\nsend /search to find a friend</i>",message_id)
+		kirim_pesan(userid,"<i>Welcome to anonim chat bot\n\nsend /search to find a friend</i>",message_id)
 		return
 	elif pesan.startswith("/search") and userid not in enterChat:
 		enterChat.append(userid)
