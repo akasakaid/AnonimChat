@@ -113,9 +113,10 @@ def main(update):
 	else:
 		username = ""
 	print(f"{userid} {first_name} - {pesan}")
-	if pesan.startswith("/start"):
+	if pesan.startswith("/start") and userid not in get_index_id(userid):
 		kirim_pesan(userid,"<i>Welcome to anonim chat bot\n\nsend /search to find a friend</i>",message_id)
-	elif pesan.startswith("/search") and userid in get_index_id(userid):
+		return
+	elif pesan.startswith("/search") and userid in get_index_id(userid) or pesan.startswith("/start") and userid in get_index_id(userid):
 		kirim_pesan(userid,"<i>you in chat now !</i>")
 		return
 	elif pesan.startswith("/search") and userid not in enterChat:
@@ -227,8 +228,8 @@ def main(update):
 	elif pesan == "/stop" and dalam_chat(userid):
 		cid = get_index_id(userid)
 		fid = get_friends_id(userid)
-		kirim_pesan(fid,"<i>you friend has stop chat !</i>")
-		kirim_pesan(userid,"<i>you has stoped chat</i>")
+		kirim_pesan(fid,"<i>you friend has stop chat !\nsend /search to find a friend !</i>")
+		kirim_pesan(userid,"<i>you has stoped chat\nsend /search to find a friend !</i>")
 		inChat.remove(cid)
 	else:
 		fid = get_friends_id(userid)
