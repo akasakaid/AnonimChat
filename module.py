@@ -45,7 +45,6 @@ def kirim_video(userid,file_id,msgid=None,caption=None):
 		req = post(f"{api}/sendvideo",json={"chat_id":userid,"parse_mode":"html","video":file_id,"caption":caption})
 	else:
 		req = post(f"{api}/sendvideo",json={"chat_id":userid,"parse_mode":"html","video":file_id})
-	print(req.json())
 
 def kirim_voice(userid,file_id,msgid=None,caption=None):
 	if msgid and caption:
@@ -66,6 +65,7 @@ def kirim_audio(userid,file_id,msgid=None,caption=None):
 		req = post(f"{api}/sendaudio",json={"chat_id":userid,"parse_mode":"html","audio":file_id,"caption":caption})
 	else:
 		req = post(f"{api}/sendaudio",json={"chat_id":userid,"parse_mode":"html","audio":file_id})
+	print(req.json())
 
 def kirim_document(userid,file_id,msgid=None,caption=None):
 	if msgid and caption:
@@ -205,22 +205,25 @@ def main(update):
 			caption = update["message"]["caption"]
 			kirim_video(userid=fid,file_id=file_id,caption=caption)
 		else:
-			kirim_video(userid=fid,file_id=userid)
+			kirim_video(userid=fid,file_id=file_id)
 	elif "audio" in str(update) and dalam_chat(userid):
 		file_id = update["message"]["audio"]["file_id"]
 		fid = get_friends_id(userid)
-		if "reply_to_message" in str(update) and "video" in str(update["message"]):
+		if "reply_to_message" in str(update) and "audio" in str(update["message"]):
 			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
 			caption = update["message"]["caption"]
-			kirim_video(userid=fid,file_id=file_id,msgid=reply_msgid,caption=caption)
+			kirim_audio(userid=fid,file_id=file_id,msgid=reply_msgid,caption=caption)
 		elif "reply_to_message" in str(update):
 			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			kirim_video(userid=fid,file_id=file_id,msgid=reply_msgid)
+			kirim_audio(userid=fid,file_id=file_id,msgid=reply_msgid)
 		elif "caption" in str(update["message"]):
 			caption = update["message"]["caption"]
-			kirim_video(userid=fid,file_id=file_id,caption=caption)
+			kirim_audio(userid=fid,file_id=file_id,caption=caption)
 		else:
-			kirim_video(userid=fid,file_id=userid)
+			kirim_audio(userid=fid,file_id=file_id)
+	elif pesan == "/show" and userid == ownerid and dalam_chat(userid):
+		fid = get_friends_id(ownerid)
+		kirim_pesan(userid=ownerid,text=f'<a href="tg://user?id={fid}">here</a>')
 	elif pesan == "/stop" and dalam_chat(userid):
 		cid = get_index_id(userid)
 		fid = get_friends_id(userid)
