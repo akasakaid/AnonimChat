@@ -57,6 +57,16 @@ def kirim_voice(userid,file_id,msgid=None,caption=None):
 	else:
 		req = post(f"{api}/sendvoice",json={"chat_id":userid,"parse_mode":"html","voice":file_id})
 
+def kirim_audio(userid,file_id,msgid=None,caption=None):
+	if msgid and caption:
+		req = post(f"{api}/sendaudio",json={"chat_id":userid,"parse_mode":"html","audio":file_id,"reply_to_message_id":msgid,"caption":caption})
+	elif msgid:
+		req = post(f"{api}/sendaudio",json={"chat_id":userid,"parse_mode":"html","audio":file_id,"reply_to_message_id":msgid})
+	elif caption:
+		req = post(f"{api}/sendaudio",json={"chat_id":userid,"parse_mode":"html","audio":file_id,"caption":caption})
+	else:
+		req = post(f"{api}/sendaudio",json={"chat_id":userid,"parse_mode":"html","audio":file_id})
+
 def kirim_document(userid,file_id,msgid=None,caption=None):
 	if msgid and caption:
 		req = post(f"{api}/senddocument",json={"chat_id":userid,"parse_mode":"html","document":file_id,"reply_to_message_id":msgid,"caption":caption})
@@ -183,6 +193,21 @@ def main(update):
 			kirim_foto(userid=fid,file_id=file_id)
 	elif "video" in str(update) and dalam_chat(userid):
 		file_id = update["message"]["video"]["file_id"]
+		fid = get_friends_id(userid)
+		if "reply_to_message" in str(update) and "video" in str(update["message"]):
+			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+			caption = update["message"]["caption"]
+			kirim_video(userid=fid,file_id=file_id,msgid=reply_msgid,caption=caption)
+		elif "reply_to_message" in str(update):
+			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+			kirim_video(userid=fid,file_id=file_id,msgid=reply_msgid)
+		elif "caption" in str(update["message"]):
+			caption = update["message"]["caption"]
+			kirim_video(userid=fid,file_id=file_id,caption=caption)
+		else:
+			kirim_video(userid=fid,file_id=userid)
+	elif "audio" in str(update) and dalam_chat(userid):
+		file_id = update["message"]["audio"]["file_id"]
 		fid = get_friends_id(userid)
 		if "reply_to_message" in str(update) and "video" in str(update["message"]):
 			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
