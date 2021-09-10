@@ -2,7 +2,8 @@ from requests import get,post
 import json
 import re
 
-token = json.loads(open("config.json"))["token"]
+token = json.loads(open("config.json").read())["token"]
+ownerid = json.loads(open("config.json").read())["owner_id"]
 api = f"https://api.telegram.org/bot{token}"
 n = 0
 
@@ -11,7 +12,6 @@ enterChat = []
 
 def kirim_pesan(userid,text,msgid=None):
 	if msgid:
-		print(msgid)
 		req = post(f"{api}/sendmessage",json={"chat_id":userid,"parse_mode":"html","text":text,"reply_to_message_id":msgid})
 	else:
 		req = post(f"{api}/sendmessage",json={"chat_id":userid,"parse_mode":"html","text":text})
@@ -105,14 +105,16 @@ def main(update):
 	print(f"{userid} {first_name} - {pesan}")
 	if pesan.startswith("/start"):
 		kirim_pesan(userid,"<i>Welcome to anonim chat bot\n\nsend /search to find a friend</i>",message_id)
+	elif pesan.startswith("/search") and userid in get_index_id(userid):
+		kirim_pesan(userid,"<i>you in chat now !</i>")
 		return
 	elif pesan.startswith("/search") and userid not in enterChat:
 		enterChat.append(userid)
 		kirim_pesan(userid=userid,text="<i>looking a friend </i>")
-	elif userid not in get_index_id(userid):
-		kirim_pesan(userid,"<i>you not in chat, type /search to search friend</i>")
 	elif pesan == "/search" and userid in enterChat:
 		kirim_pesan(userid,"<i>you are in the queue, wait until you get a friend !</i>")
+	elif userid not in get_index_id(userid):
+		kirim_pesan(userid,"<i>you not in chat, type /search to search friend</i>")
 	if len(enterChat) == 2:
 		data = [enterChat[0],enterChat[1]]
 		inChat.append(data)
