@@ -1,4 +1,4 @@
-from requests import get,post
+from requests import exceptions, get,post
 import json
 import re
 
@@ -99,142 +99,145 @@ def dalam_chat(userid):
 			return False
 
 def main(update):
-	userid = update["message"]["from"]["id"]
-	first_name = update["message"]["from"]["first_name"]
-	last_name = update["message"]["from"]["last_name"]
-	tipe = update["message"]["chat"]["type"]
-	message_id = update["message"]["message_id"]
 	try:
-		pesan = update["message"]["text"]
+		userid = update["message"]["from"]["id"]
+		first_name = update["message"]["from"]["first_name"]
+		last_name = update["message"]["from"]["last_name"]
+		tipe = update["message"]["chat"]["type"]
+		message_id = update["message"]["message_id"]
+		try:
+			pesan = update["message"]["text"]
+		except KeyError:
+			pesan = ""
+		if "username" in update["message"]["from"]:
+			username = update["message"]["from"]["username"]
+		else:
+			username = ""
+		print(f"{userid} {first_name} - {pesan}")
+		if pesan.startswith("/start") and userid not in get_index_id(userid):
+			kirim_pesan(userid,"<i>Welcome to anonim chat bot\n\nsend /search to find a friend</i>",message_id)
+			return
+		elif pesan.startswith("/search") and userid in get_index_id(userid) or pesan.startswith("/start") and userid in get_index_id(userid):
+			kirim_pesan(userid,"<i>you in chat now !</i>")
+			return
+		elif pesan.startswith("/search") and userid not in enterChat:
+			enterChat.append(userid)
+			kirim_pesan(userid=userid,text="<i>looking a friend </i>")
+		elif pesan == "/search" and userid in enterChat:
+			kirim_pesan(userid,"<i>you are in the queue, wait until you get a friend !</i>")
+		elif userid not in get_index_id(userid):
+			kirim_pesan(userid,"<i>you not in chat, type /search to search friend</i>")
+		if len(enterChat) == 2:
+			data = [enterChat[0],enterChat[1]]
+			inChat.append(data)
+			[kirim_pesan(tid,"<i>friend found ❤️\ntype /stop to stop the conversation</i>") for tid in enterChat]
+			enterChat.clear()
+			return
+		if pesan == "/stop" and dalam_chat(userid):
+			cid = get_index_id(userid)
+			fid = get_friends_id(userid)
+			kirim_pesan(fid,"<i>you friend has stop chat !\nsend /search to find a friend !</i>")
+			kirim_pesan(userid,"<i>you has stoped chat\nsend /search to find a friend !</i>")
+			inChat.remove(cid)
+		elif pesan == "/show" and userid == ownerid and dalam_chat(userid):
+			fid = get_friends_id(ownerid)
+			kirim_pesan(userid=ownerid,text=f'<a href="tg://user?id={fid}">here</a>')
+		elif "sticker" in str(update) and dalam_chat(userid):
+			file_id = update["message"]["sticker"]["file_id"]
+			fid = get_friends_id(userid)
+			if "reply_to_message" in str(update) and "caption" in str(update["message"]["sticker"]):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				caption = update["message"]["caption"]
+				kirim_stiker(fid,file_id,reply_msgid,caption=caption)
+			elif "reply_to_message" in str(update):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				kirim_stiker(userid=fid,file_id=file_id,msgid=reply_msgid)
+			elif "caption" in str(update["message"]["sticker"]):
+				caption = update["message"]["caption"]
+				kirim_stiker(userid=fid,file_id=file_id,caption=caption)
+			else:
+				kirim_stiker(userid=fid,file_id=file_id)
+		elif "voice" in str(update) and dalam_chat(userid):
+			file_id = update["message"]["voice"]["file_id"]
+			fid = get_friends_id(userid)
+			if "reply_to_message" in str(update) and "caption" in str(update["message"]):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				caption = update["message"]["caption"]
+				kirim_voice(fid,file_id,reply_msgid,caption=caption)
+			elif "reply_to_message" in str(update):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				kirim_voice(userid=fid,file_id=file_id,msgid=reply_msgid)
+			elif "caption" in str(update["message"]):
+				caption = update["message"]["caption"]
+				kirim_voice(userid=fid,file_id=file_id,caption=caption)
+			else:
+				kirim_voice(userid=fid,file_id=file_id)
+		elif "document" in str(update) and dalam_chat(userid):
+			file_id = update["message"]["document"]["file_id"]
+			fid = get_friends_id(userid)
+			if "reply_to_message" in str(update) and "caption" in str(update["message"]):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				caption = update["message"]["caption"]
+				kirim_document(fid,file_id,reply_msgid,caption)
+			elif "reply_to_message" in str(update):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				kirim_document(fid,file_id,reply_msgid)
+			elif "caption" in str(update["message"]):
+				caption = update["message"]["caption"]
+				kirim_document(fid,file_id,caption=caption)
+			else:
+				kirim_document(fid,file_id)
+		elif "photo" in str(update) and dalam_chat(userid):
+			file_id = update["message"]["photo"][0]["file_id"]
+			fid = get_friends_id(userid)
+			if "reply_to_message" in str(update) and "caption" in str(update["message"]):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				caption = update["message"]["caption"]
+				kirim_foto(fid,file_id,reply_msgid,caption=caption)
+			elif "reply_to_message" in str(update):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				kirim_foto(userid=fid,file_id=file_id,msgid=reply_msgid)
+			elif "caption" in str(update["message"]):
+				caption = update["message"]["caption"]
+				kirim_foto(userid=fid,file_id=file_id,caption=caption)
+			else:
+				kirim_foto(userid=fid,file_id=file_id)
+		elif "video" in str(update) and dalam_chat(userid):
+			file_id = update["message"]["video"]["file_id"]
+			fid = get_friends_id(userid)
+			if "reply_to_message" in str(update) and "video" in str(update["message"]):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				caption = update["message"]["caption"]
+				kirim_video(userid=fid,file_id=file_id,msgid=reply_msgid,caption=caption)
+			elif "reply_to_message" in str(update):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				kirim_video(userid=fid,file_id=file_id,msgid=reply_msgid)
+			elif "caption" in str(update["message"]):
+				caption = update["message"]["caption"]
+				kirim_video(userid=fid,file_id=file_id,caption=caption)
+			else:
+				kirim_video(userid=fid,file_id=file_id)
+		elif "audio" in str(update) and dalam_chat(userid):
+			file_id = update["message"]["audio"]["file_id"]
+			fid = get_friends_id(userid)
+			if "reply_to_message" in str(update) and "audio" in str(update["message"]):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				caption = update["message"]["caption"]
+				kirim_audio(userid=fid,file_id=file_id,msgid=reply_msgid,caption=caption)
+			elif "reply_to_message" in str(update):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				kirim_audio(userid=fid,file_id=file_id,msgid=reply_msgid)
+			elif "caption" in str(update["message"]):
+				caption = update["message"]["caption"]
+				kirim_audio(userid=fid,file_id=file_id,caption=caption)
+			else:
+				kirim_audio(userid=fid,file_id=file_id)
+		else:
+			fid = get_friends_id(userid)
+			if "reply_to_message" in str(update):
+				reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
+				kirim_pesan(userid=fid,text=pesan,msgid=reply_msgid)
+			else:
+				kirim_pesan(userid=fid,text=pesan)
 	except KeyError:
-		pesan = ""
-	if "username" in update["message"]["from"]:
-		username = update["message"]["from"]["username"]
-	else:
-		username = ""
-	print(f"{userid} {first_name} - {pesan}")
-	if pesan.startswith("/start") and userid not in get_index_id(userid):
-		kirim_pesan(userid,"<i>Welcome to anonim chat bot\n\nsend /search to find a friend</i>",message_id)
 		return
-	elif pesan.startswith("/search") and userid in get_index_id(userid) or pesan.startswith("/start") and userid in get_index_id(userid):
-		kirim_pesan(userid,"<i>you in chat now !</i>")
-		return
-	elif pesan.startswith("/search") and userid not in enterChat:
-		enterChat.append(userid)
-		kirim_pesan(userid=userid,text="<i>looking a friend </i>")
-	elif pesan == "/search" and userid in enterChat:
-		kirim_pesan(userid,"<i>you are in the queue, wait until you get a friend !</i>")
-	elif userid not in get_index_id(userid):
-		kirim_pesan(userid,"<i>you not in chat, type /search to search friend</i>")
-	if len(enterChat) == 2:
-		data = [enterChat[0],enterChat[1]]
-		inChat.append(data)
-		[kirim_pesan(tid,"<i>friend found ❤️\ntype /stop to stop the conversation</i>") for tid in enterChat]
-		enterChat.clear()
-		return
-	if "sticker" in str(update) and dalam_chat(userid):
-		file_id = update["message"]["sticker"]["file_id"]
-		fid = get_friends_id(userid)
-		if "reply_to_message" in str(update) and "caption" in str(update["message"]["sticker"]):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			caption = update["message"]["caption"]
-			kirim_stiker(fid,file_id,reply_msgid,caption=caption)
-		elif "reply_to_message" in str(update):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			kirim_stiker(userid=fid,file_id=file_id,msgid=reply_msgid)
-		elif "caption" in str(update["message"]["sticker"]):
-			caption = update["message"]["caption"]
-			kirim_stiker(userid=fid,file_id=file_id,caption=caption)
-		else:
-			kirim_stiker(userid=fid,file_id=file_id)
-	elif "voice" in str(update) and dalam_chat(userid):
-		file_id = update["message"]["voice"]["file_id"]
-		fid = get_friends_id(userid)
-		if "reply_to_message" in str(update) and "caption" in str(update["message"]):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			caption = update["message"]["caption"]
-			kirim_voice(fid,file_id,reply_msgid,caption=caption)
-		elif "reply_to_message" in str(update):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			kirim_voice(userid=fid,file_id=file_id,msgid=reply_msgid)
-		elif "caption" in str(update["message"]):
-			caption = update["message"]["caption"]
-			kirim_voice(userid=fid,file_id=file_id,caption=caption)
-		else:
-			kirim_voice(userid=fid,file_id=file_id)
-	elif "document" in str(update) and dalam_chat(userid):
-		file_id = update["message"]["document"]["file_id"]
-		fid = get_friends_id(userid)
-		if "reply_to_message" in str(update) and "caption" in str(update["message"]):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			caption = update["message"]["caption"]
-			kirim_document(fid,file_id,reply_msgid,caption)
-		elif "reply_to_message" in str(update):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			kirim_document(fid,file_id,reply_msgid)
-		elif "caption" in str(update["message"]):
-			caption = update["message"]["caption"]
-			kirim_document(fid,file_id,caption=caption)
-		else:
-			kirim_document(fid,file_id)
-	elif "photo" in str(update) and dalam_chat(userid):
-		file_id = update["message"]["photo"][0]["file_id"]
-		fid = get_friends_id(userid)
-		if "reply_to_message" in str(update) and "caption" in str(update["message"]):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			caption = update["message"]["caption"]
-			kirim_foto(fid,file_id,reply_msgid,caption=caption)
-		elif "reply_to_message" in str(update):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			kirim_foto(userid=fid,file_id=file_id,msgid=reply_msgid)
-		elif "caption" in str(update["message"]):
-			caption = update["message"]["caption"]
-			kirim_foto(userid=fid,file_id=file_id,caption=caption)
-		else:
-			kirim_foto(userid=fid,file_id=file_id)
-	elif "video" in str(update) and dalam_chat(userid):
-		file_id = update["message"]["video"]["file_id"]
-		fid = get_friends_id(userid)
-		if "reply_to_message" in str(update) and "video" in str(update["message"]):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			caption = update["message"]["caption"]
-			kirim_video(userid=fid,file_id=file_id,msgid=reply_msgid,caption=caption)
-		elif "reply_to_message" in str(update):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			kirim_video(userid=fid,file_id=file_id,msgid=reply_msgid)
-		elif "caption" in str(update["message"]):
-			caption = update["message"]["caption"]
-			kirim_video(userid=fid,file_id=file_id,caption=caption)
-		else:
-			kirim_video(userid=fid,file_id=file_id)
-	elif "audio" in str(update) and dalam_chat(userid):
-		file_id = update["message"]["audio"]["file_id"]
-		fid = get_friends_id(userid)
-		if "reply_to_message" in str(update) and "audio" in str(update["message"]):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			caption = update["message"]["caption"]
-			kirim_audio(userid=fid,file_id=file_id,msgid=reply_msgid,caption=caption)
-		elif "reply_to_message" in str(update):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			kirim_audio(userid=fid,file_id=file_id,msgid=reply_msgid)
-		elif "caption" in str(update["message"]):
-			caption = update["message"]["caption"]
-			kirim_audio(userid=fid,file_id=file_id,caption=caption)
-		else:
-			kirim_audio(userid=fid,file_id=file_id)
-	elif pesan == "/show" and userid == ownerid and dalam_chat(userid):
-		fid = get_friends_id(ownerid)
-		kirim_pesan(userid=ownerid,text=f'<a href="tg://user?id={fid}">here</a>')
-	elif pesan == "/stop" and dalam_chat(userid):
-		cid = get_index_id(userid)
-		fid = get_friends_id(userid)
-		kirim_pesan(fid,"<i>you friend has stop chat !\nsend /search to find a friend !</i>")
-		kirim_pesan(userid,"<i>you has stoped chat\nsend /search to find a friend !</i>")
-		inChat.remove(cid)
-	else:
-		fid = get_friends_id(userid)
-		if "reply_to_message" in str(update):
-			reply_msgid = update["message"]["reply_to_message"]["message_id"] - 1
-			kirim_pesan(userid=fid,text=pesan,msgid=reply_msgid)
-		else:
-			kirim_pesan(userid=fid,text=pesan)

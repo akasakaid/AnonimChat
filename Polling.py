@@ -6,7 +6,7 @@ from requests.exceptions import *
 
 token = json.loads(open("config.json").read())["token"]
 n = 0
-os.system("cls" if os.name == "nt" else "clear")
+#os.system("cls" if os.name == "nt" else "clear")
 while True:
 	try:
 		req = get(f"https://api.telegram.org/bot{token}/getupdates",params={"offset":n}).json()
