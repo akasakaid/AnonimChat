@@ -139,9 +139,6 @@ def main(update):
 			kirim_pesan(fid,"<i>you friend has stop chat !\nsend /search to find a friend !</i>")
 			kirim_pesan(userid,"<i>you has stoped chat\nsend /search to find a friend !</i>")
 			inChat.remove(cid)
-		elif pesan == "/show" and userid == ownerid and dalam_chat(userid):
-			fid = get_friends_id(ownerid)
-			kirim_pesan(userid=ownerid,text=f'<a href="tg://user?id={fid}">here</a>')
 		elif "sticker" in str(update) and dalam_chat(userid):
 			file_id = update["message"]["sticker"]["file_id"]
 			fid = get_friends_id(userid)
